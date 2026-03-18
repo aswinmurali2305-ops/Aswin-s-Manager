@@ -34,7 +34,7 @@
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2">
                 <p class="text-[10px] text-gray-500 uppercase font-bold text-red-500">Total Pending</p>
-                <p id="stat-pending" class="text-2xl font-black text-red-500">$0</p>
+                <p id="stat-pending" class="text-2xl font-black text-red-600">$0</p>
             </div>
         </div>
 
@@ -113,7 +113,7 @@
 
         function save() { 
             localStorage.setItem('aswin_money_data', JSON.stringify(services)); 
-            renderDashboard(); // Update counts immediately
+            renderDashboard(); 
         }
 
         function showPage(pageId) {
@@ -149,8 +149,8 @@
 
             services.push(entry);
             save();
-            nameInput.value = ''; // Clear only the name for next entry
-            alert("✅ Saved to Log!");
+            nameInput.value = ''; // Reset name for next entry
+            alert("✅ Record Saved to Dashboard!");
         }
 
         function deleteEntry(id) {
@@ -198,7 +198,7 @@
                     <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border-l-4 ${s.status === 'Paid' ? 'border-green-500' : 'border-red-500'}">
                         <div>
                             <p class="font-bold text-gray-800">${s.name}</p>
-                            <p class="text-[10px] text-gray-400">${s.date} | ${s.time}</p>
+                            <p class="text-[10px] text-gray-400 font-mono">${s.date} | ${s.time}</p>
                         </div>
                         <div class="text-right">
                             <p class="font-black text-slate-700">CAD ${s.amount}</p>
@@ -246,8 +246,8 @@
             const pending = userServices.filter(s => s.status === 'Pending').reduce((a, b) => a + b.amount, 0);
 
             let waList = userServices.map(s => `- ${s.date} ${s.time}: CAD ${s.amount} (${s.status})`).join('\n');
-            const waFull = encodeURIComponent(`Hi ${name}, your summary:\n\nOutstanding: CAD ${pending}\n\nHistory:\n${waList}`);
-            const waNudge = encodeURIComponent(`Hi ${name}, friendly reminder regarding the pending balance of CAD ${pending}. Thank you!`);
+            const waFull = encodeURIComponent(`Hi ${name}, your session summary:\n\nOutstanding Balance: CAD ${pending}\n\nHistory:\n${waList}`);
+            const waNudge = encodeURIComponent(`Hi ${name}, just a friendly nudge regarding the pending balance of CAD ${pending} from our recent sessions. Thank you!`);
             
             let historyHtml = filteredHistory.map(s => `
                 <div class="py-4 border-b flex justify-between items-center">
@@ -258,14 +258,17 @@
             content.innerHTML = `
                 <h2 class="text-3xl font-black text-slate-800">${name}</h2>
                 <div class="grid grid-cols-2 gap-4 my-6">
-                    <div class="bg-blue-50 p-4 rounded-xl"><p class="text-[10px] uppercase text-blue-500 font-bold">Visits</p><p class="text-2xl font-black text-blue-900">${userServices.length}</p></div>
-                    <div class="bg-red-50 p-4 rounded-xl"><p class="text-[10px] uppercase text-red-400 font-bold">Unpaid</p><p class="text-2xl font-black text-red-600">${pending}</p></div>
+                    <div class="bg-blue-50 p-4 rounded-xl"><p class="text-[10px] uppercase text-blue-500 font-bold">Total Visits</p><p class="text-2xl font-black text-blue-900">${userServices.length}</p></div>
+                    <div class="bg-red-50 p-4 rounded-xl"><p class="text-[10px] uppercase text-red-400 font-bold">Unpaid CAD</p><p class="text-2xl font-black text-red-600">${pending}</p></div>
                 </div>
                 <div class="space-y-2 mb-6">
-                    <button onclick="window.open('https://wa.me/?text=${waFull}')" class="w-full bg-[#25D366] text-white font-bold py-4 rounded-2xl shadow-md">History to WhatsApp</button>
-                    ${pending > 0 ? `<button onclick="window.open('https://wa.me/?text=${waNudge}')" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl text-xs uppercase">Send Payment Reminder</button>` : ''}
+                    <button onclick="window.open('https://wa.me/?text=${waFull}')" class="w-full bg-[#25D366] text-white font-bold py-4 rounded-2xl shadow-md active:scale-95">Send History to WhatsApp</button>
+                    ${pending > 0 ? `<button onclick="window.open('https://wa.me/?text=${waNudge}')" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl text-xs uppercase active:scale-95">Send Quick Reminder</button>` : ''}
                 </div>
-                <input type="text" id="history-filter" oninput="renderProfileDetails()" placeholder="Search history..." class="w-full p-3 rounded-lg text-sm bg-gray-50 outline-none mb-4" value="${filterValue}">
+                <div class="mb-4">
+                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Filter History</p>
+                    <input type="text" id="history-filter" oninput="renderProfileDetails()" placeholder="Search date or time..." class="w-full p-3 rounded-lg text-sm bg-gray-50 outline-none" value="${filterValue}">
+                </div>
                 <div class="pb-20">${historyHtml || '<p class="text-gray-400 text-sm">No records found.</p>'}</div>
             `;
             if(filterValue) document.getElementById('history-filter').focus();
@@ -274,7 +277,7 @@
         function closeProfile() { document.getElementById('modal-profile').classList.add('hidden'); }
 
         function exportToCSV() {
-            if(services.length === 0) return alert("No data!");
+            if(services.length === 0) return alert("No data to export!");
             let csv = "Customer Name,Date,Time,Amount,Status\n";
             services.forEach(s => csv += `"${s.name}","${s.date}","${s.time}",${s.amount},"${s.status}"\n`);
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -288,7 +291,7 @@
         }
 
         function clearAllData() {
-            if(!confirm("Clear everything?")) return;
+            if(!confirm("Are you sure? This will delete ALL data.")) return;
             services = []; save(); location.reload();
         }
 
